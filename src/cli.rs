@@ -10,7 +10,13 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Add {
-        task: String,
+        title: String,
+        #[arg(short, long)]
+        tag: Option<String>,
+        #[arg(short, long)]
+        priority: Option<String>,
+        #[arg(short, long)]
+        due: Option<String>,
     },
     List {
         #[arg(short, long)]
