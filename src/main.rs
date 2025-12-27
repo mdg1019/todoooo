@@ -52,7 +52,10 @@ fn main() {
         }
         cli::Commands::List { all } => {
             if *all {
-                println!("Listing all tasks:");
+                let tasks = db.list_tasks().expect("Failed to list tasks");
+                tasks.iter().for_each(|task| {
+                    println!("{:?}", task);
+                });
             } else {
                 println!("Listing pending tasks:");
             }
