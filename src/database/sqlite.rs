@@ -2,6 +2,20 @@ use super::Database;
 use crate::models::Task;
 use sqlite::Connection;
 
+#[macro_export]
+macro_rules! statement_bind {
+    ($stmt:expr, $args:expr) => {
+        $stmt.bind($args).map_err(|e| e.to_string())?
+    };
+}
+
+#[macro_export]
+macro_rules! statement_read {
+    ($stmt:expr, $idx:expr) => {
+        $stmt.read($idx).map_err(|e| e.to_string())?
+    };
+}
+
 pub struct SqliteDatabase {}
 
 impl SqliteDatabase {}
@@ -39,32 +53,15 @@ impl Database for SqliteDatabase {
             )
             .map_err(|e| e.to_string())?;
 
-                statement
-                    .bind((1, &task.id as &str))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((2, &task.title as &str))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((3, task.done as i64))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((4, &task.created_at.to_rfc3339() as &str))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((
-                        5,
-                        &task.due.map(|d| d.to_rfc3339()).unwrap_or_default() as &str,
-                    ))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((6, &tags.unwrap_or_default() as &str))
-                    .map_err(|e| e.to_string())?;
-                statement
-                    .bind((7, &format!("{:?}", task.priority) as &str))
-                    .map_err(|e| e.to_string())?;
+        statement_bind!(statement, (1, &task.id as &str));
+        statement_bind!(statement, (2, &task.title as &str));
+        statement_bind!(statement, (3, task.done as i64));
+        statement_bind!(statement, (4, &task.created_at.to_rfc3339() as &str));
+        statement_bind!(statement, (5, &task.due.map(|d| d.to_rfc3339()).unwrap_or_default() as &str));
+        statement_bind!(statement, (6, &tags.unwrap_or_default() as &str));
+        statement_bind!(statement, (7, &format!("{:?}", task.priority) as &str));
 
-                statement.next().map_err(|e| e.to_string())?;
+        statement.next().map_err(|e| e.to_string())?;
 
         Ok(())
     }   
@@ -76,13 +73,13 @@ impl Database for SqliteDatabase {
         ).map_err(|e| e.to_string())?;
         let mut tasks = Vec::new();
         while let sqlite::State::Row = statement.next().map_err(|e| e.to_string())? {
-            let id: String = statement.read(0).map_err(|e| e.to_string())?;
-            let title: String = statement.read(1).map_err(|e| e.to_string())?;
-            let done: i64 = statement.read(2).map_err(|e| e.to_string())?;
-            let created_at: String = statement.read(3).map_err(|e| e.to_string())?;
-            let due: String = statement.read(4).map_err(|e| e.to_string())?;
-            let tags: String = statement.read(5).map_err(|e| e.to_string())?;
-            let priority: String = statement.read(6).map_err(|e| e.to_string())?;
+            let id: String = statement_read!(statement, 0);
+            let title: String = statement_read!(statement, 1);
+            let done: i64 = statement_read!(statement, 2);
+            let created_at: String = statement_read!(statement, 3);
+            let due: String = statement_read!(statement, 4);
+            let tags: String = statement_read!(statement, 5);
+            let priority: String = statement_read!(statement, 6);
             let created_at = chrono::DateTime::parse_from_rfc3339(&created_at).map_err(|e| e.to_string())?.with_timezone(&chrono::Local);
             let due = if due.is_empty() {
                 None
