@@ -1,13 +1,19 @@
 mod cli;
 mod models;
+mod database;
 
 use clap::Parser;
 use chrono::{Local, DateTime};
 use cli::Cli;
 use models::{Task, Priority};
 use uuid::Uuid;
+use database::Database;
+use database::sqlite::SqliteDatabase;
 
 fn main() {
+    let db: Box<dyn Database> = Box::new(SqliteDatabase{});
+    db.create_database().expect("Failed to create database");
+    
     let cli = Cli::parse();
     match &cli.command {
         cli::Commands::Add { title, tag, priority, due } => {
@@ -39,6 +45,8 @@ fn main() {
                 tags,
                 priority,
             };
+
+            db.add_task(&task).expect("Failed to add task");
 
             println!("Created task: {:?}", task);
         }
